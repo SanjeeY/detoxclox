@@ -9,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
     periodEnabled=false;
     isPaused=true;
     ui->setupUi(this);
+    isMinimized=false;
+    create_tray_icon();
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateInterface()));
     timer->start(50);
@@ -18,6 +20,73 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+
+
+void MainWindow::create_tray_icon()
+{
+   QSystemTrayIcon *m_tray_icon;
+   m_tray_icon = new QSystemTrayIcon(QIcon(":/icons/clock_mini-128.png"), this);
+   this->setWindowIcon(QIcon(":/icons/clock_mini-128.png"));
+
+   connect( m_tray_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(on_show_hide(QSystemTrayIcon::ActivationReason)) );
+
+   QAction *quit_action = new QAction( "Exit", m_tray_icon );
+   connect( quit_action, SIGNAL(triggered()), this, SLOT(on_exit()) );
+
+   QAction *hide_action = new QAction( "Show/Hide", m_tray_icon );
+   connect( hide_action, SIGNAL(triggered()), this, SLOT(on_show_hide()));
+
+   QMenu *tray_icon_menu = new QMenu;
+   tray_icon_menu->addAction( hide_action );
+   tray_icon_menu->addAction( quit_action );
+
+   m_tray_icon->setContextMenu( tray_icon_menu );
+
+   m_tray_icon->show();
+ }
+
+void MainWindow::on_show_hide( QSystemTrayIcon::ActivationReason reason )
+{
+   if( reason )
+   {
+       if( reason != QSystemTrayIcon::DoubleClick)
+       return;
+   }
+   if( this->isVisible() )
+   {
+       hide();
+   }
+   else
+   {
+       show();
+       raise();
+       setFocus();
+   }
+
+}
+void MainWindow::on_show_hide()
+{
+   if( this->isVisible() )
+   {
+       hide();
+   }
+   else
+   {
+       show();
+       raise();
+       setFocus();
+   }
+
+}
+
+
+void MainWindow::on_exit()
+{
+    qApp->exit();
+}
+
+
 
 void MainWindow::on_setDetoxButton_clicked()
 {

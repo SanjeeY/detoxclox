@@ -11,7 +11,6 @@ CONFIG += static
 TARGET = detoxCalc
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
         mainwindow.cpp \
     setperioddialog.cpp
@@ -21,3 +20,6 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui \
     setperioddialog.ui
+
+RESOURCES += \
+    desktopIcon.qrc
