@@ -91,50 +91,45 @@ void MainWindow::on_exit()
 void MainWindow::on_setDetoxButton_clicked()
 {
     setPeriodDialog p(this);
-    if(isPaused && p.exec()== QDialog::Accepted)
+    if(!periodEnabled && p.exec()== QDialog::Accepted)
     {
         detoxPeriod = p.returnPeriod();
         this->statusBar()->showMessage((QString)"Detox Period Set: " + QString::number(detoxPeriod) + " hours");
-        periodEnabled = false;
+        periodEnabled = true;
 
     }
-    else if (!isPaused)
+    else if (periodEnabled &&  p.exec()== QDialog::Accepted)
     {
-        this->statusBar()->showMessage((QString)"Please disable detox clock first.");
+        timer->stop();
+        detoxPeriod = p.returnPeriod();
+        this->statusBar()->showMessage((QString)"Detox Period Set: " + QString::number(detoxPeriod) + " hours");
+        ui->startButton->setText("Start");
+        updateInterface();
     }
 }
 
 void MainWindow::on_startButton_clicked()
 {
-    if(!periodEnabled&&isPaused&&detoxPeriod!=0)
+    if(periodEnabled&&detoxPeriod!=0)
     {
-        periodEnabled = true;
         start = QDateTime::currentDateTime();
         end = start.addSecs(detoxPeriod*60*60);
-        isPaused = false;
         timer->start(50);
-        ui->startButton->setText("Stop");
-    }
-    else if (!isPaused)
-    {
-        isPaused = true;
-        paused = QDateTime::currentDateTime();
-        timer->stop();
-        ui->startButton->setText("Start");
-    }
-    else if (isPaused)
-    {
-        isPaused = false;
-        qint64 pausedTime = paused.msecsTo(QDateTime::currentDateTime());
-        start = start.addMSecs(pausedTime);
-        end = end.addMSecs(pausedTime);
-        timer->start();
-        ui->startButton->setText("Stop");
+        ui->startButton->setText("Restart");
     }
     else if (detoxPeriod==0)
     {
         this->statusBar()->showMessage((QString)"Please set detox period first!");
     }
+    else
+    {
+        timer->stop();
+        start = QDateTime::currentDateTime();
+        end = start.addSecs(detoxPeriod*60*60);
+        timer->start();
+        updateInterface();
+    }
+
 
 }
 
