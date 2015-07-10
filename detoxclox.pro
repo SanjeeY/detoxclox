@@ -4,9 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
-
-QMAKE_CXXFLAGS += -std=c++11
+QT       += core gui widgets
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += static
 RC_FILE = appicon.rc

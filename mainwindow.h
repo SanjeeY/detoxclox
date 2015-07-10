@@ -6,6 +6,9 @@
 #include <QTimer>
 #include <QIcon>
 #include <QSystemTrayIcon>
+#include <QFile>
+#include <QFileDialog>
+#include <QDataStream>
 #include "setperioddialog.h"
 
 namespace Ui {
@@ -24,7 +27,6 @@ private slots:
     void on_setDetoxButton_clicked();
     void updateInterface();
     void on_startButton_clicked();
-    void on_restartButton_clicked();
     void on_timeElapsed_clicked();
     void on_timeLeft_clicked();
     void on_percentCompleted_clicked();
@@ -34,10 +36,14 @@ private slots:
     void on_show_hide();
     void on_exit();
 
+    void on_saveButton_clicked();
+
+    void on_loadButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     int detoxPeriod;
-    bool periodEnabled, isPaused, isMinimized;
+    bool periodEnabled, isMinimized;
     QTimer *timer;
     QDateTime start, end, paused;
     int displayFlag;

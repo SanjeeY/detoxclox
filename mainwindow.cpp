@@ -7,7 +7,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     detoxPeriod=0;
     periodEnabled=false;
-    isPaused=true;
     ui->setupUi(this);
     isMinimized=false;
     create_tray_icon();
@@ -96,6 +95,7 @@ void MainWindow::on_setDetoxButton_clicked()
         detoxPeriod = p.returnPeriod();
         this->statusBar()->showMessage((QString)"Detox Period Set: " + QString::number(detoxPeriod) + " hours");
         periodEnabled = true;
+        ui->startButton->setEnabled(true);
 
     }
     else if (periodEnabled &&  p.exec()== QDialog::Accepted)
@@ -109,71 +109,52 @@ void MainWindow::on_setDetoxButton_clicked()
 }
 
 void MainWindow::on_startButton_clicked()
-{
-    if(periodEnabled&&detoxPeriod!=0)
-    {
+{     
+        ui->saveButton->setEnabled(true);
         start = QDateTime::currentDateTime();
         end = start.addSecs(detoxPeriod*60*60);
         timer->start(50);
         ui->startButton->setText("Restart");
-    }
-    else if (detoxPeriod==0)
-    {
-        this->statusBar()->showMessage((QString)"Please set detox period first!");
-    }
-    else
-    {
-        timer->stop();
-        start = QDateTime::currentDateTime();
-        end = start.addSecs(detoxPeriod*60*60);
-        timer->start();
-        updateInterface();
-    }
-
-
 }
 
 void MainWindow::updateInterface()
 {
-    if(periodEnabled&&ui->percentCompleted->isChecked())
-    {
-        double percentage = (1 - (double)(QDateTime::currentDateTime().msecsTo(end)) / (double)(start.msecsTo(end))) * 100;
-        if (percentage >= 100)
-            ui->label->setText("CLOCK FINISHED");
-        else
-            ui->label->setText(QString::number(percentage,'f',6) + "%");
-    }
-    else if(periodEnabled&&ui->percentLeft->isChecked())
-    {
-        double percentage = ((double)(QDateTime::currentDateTime().msecsTo(end)) / (double)(start.msecsTo(end))) * 100;
-        if (percentage >= 100)
-            ui->label->setText("CLOCK FINISHED");
-        else
-            ui->label->setText(QString::number(percentage,'f',6) + "%");
-    }
-    else if (periodEnabled&&ui->timeElapsed->isChecked())
-    {
-        qint64 elapsed = start.msecsTo(QDateTime::currentDateTime());
-        ui->label->setText(generateTime(elapsed));
-
-    }
-    else if (periodEnabled&&ui->timeLeft->isChecked())
-    {
-        qint64 left = QDateTime::currentDateTime().msecsTo(end);
-        if (left <= 0)
-            ui->label->setText("CLOCK FINISHED");
-        else
-            ui->label->setText(generateTime(left));
-
-    }
-    else if (ui->currentTime->isChecked())
-    {
-
+    if (ui->currentTime->isChecked())
         ui->label->setText(QDateTime::currentDateTime().toString("hh:mm:ss.zzz ap"));
-
+    else if(periodEnabled)
+    {
+        if(ui->percentCompleted->isChecked())
+        {
+            double percentage = (1 - (double)(QDateTime::currentDateTime().msecsTo(end)) / (double)(start.msecsTo(end))) * 100;
+            if (percentage >= 100)
+                ui->label->setText("CLOCK FINISHED");
+            else
+                ui->label->setText(QString::number(percentage,'f',6) + "%");
+        }
+        else if(ui->percentLeft->isChecked())
+        {
+            double percentage = ((double)(QDateTime::currentDateTime().msecsTo(end)) / (double)(start.msecsTo(end))) * 100;
+            if (percentage >= 100)
+                ui->label->setText("CLOCK FINISHED");
+            else
+                ui->label->setText(QString::number(percentage,'f',6) + "%");
+        }
+        else if (ui->timeElapsed->isChecked())
+        {
+            qint64 elapsed = start.msecsTo(QDateTime::currentDateTime());
+            ui->label->setText(generateTime(elapsed));
+        }
+        else if (ui->timeLeft->isChecked())
+        {
+            qint64 left = QDateTime::currentDateTime().msecsTo(end);
+            if (left <= 0)
+                ui->label->setText("CLOCK FINISHED");
+            else
+                ui->label->setText(generateTime(left));
+        }
     }
     else if (!periodEnabled)
-        ui->label->setText(" ");
+        ui->label->setText("Detoxclox not active");
 
 }
 
@@ -187,47 +168,22 @@ QString MainWindow::generateTime(qint64 msecsTotal)
 
 }
 
-void MainWindow::on_restartButton_clicked()
-{
-    if(periodEnabled&&!isPaused)
-    {
-        timer->stop();
-        start = QDateTime::currentDateTime();
-        end = start.addSecs(detoxPeriod*60*60);
-        timer->start();
-    }
-    else if(periodEnabled&&isPaused)
-    {
-        paused = QDateTime::currentDateTime();
-        start = QDateTime::currentDateTime();
-        end = start.addSecs(detoxPeriod*60*60);
-        updateInterface();
-    }
-    else
-        this->statusBar()->showMessage((QString)"Please set detox period first!");
-
-
-}
-
 
 void MainWindow::on_timeElapsed_clicked()
 {
     f = ui->label->font();
-    f.setPointSize(32);
     ui->label->setFont(f);
 }
 
 void MainWindow::on_timeLeft_clicked()
 {
     f = ui->label->font();
-    f.setPointSize(32);
     ui->label->setFont(f);
 }
 
 void MainWindow::on_percentCompleted_clicked()
 {
     f = ui->label->font();
-    f.setPointSize(48);
     ui->label->setFont(f);
 }
 
@@ -235,14 +191,58 @@ void MainWindow::on_percentLeft_clicked()
 {
 
     f = ui->label->font();
-    f.setPointSize(48);
     ui->label->setFont(f);
 }
 
 void MainWindow::on_currentTime_clicked()
 {
     f = ui->label->font();
-    f.setPointSize(32);
     ui->label->setFont(f);
-\
+}
+
+void MainWindow::on_saveButton_clicked()
+{
+    if(periodEnabled)
+    {
+        QString fn = QFileDialog::getSaveFileName(this, tr("Save File..."),
+                                                   QString(), tr("dat files (*.dat);;All Files (*)"));
+         if (!fn.isEmpty())
+         {
+            QFile file(fn);
+            file.open(QIODevice::WriteOnly);
+            QDataStream out(&file);
+            out << start.toMSecsSinceEpoch() << end.toMSecsSinceEpoch() << detoxPeriod;
+            file.flush();
+            file.close();
+            this->statusBar()->showMessage("Detox period saved.");
+         }
+    }
+    else
+    {
+        this->statusBar()->showMessage("Cannot save. No period set.");
+    }
+}
+
+void MainWindow::on_loadButton_clicked()
+{
+    QString fn = QFileDialog::getOpenFileName(this, tr("Open File..."),
+                                              QString(), tr("dat files (*.dat);;All Files (*)"));
+    if (!fn.isEmpty())
+    {
+        QFile file(fn);
+        file.open(QIODevice::ReadOnly);
+        QDataStream in(&file);
+        qint64 s, e;
+        in >> s;
+        in >> e;
+        start.setMSecsSinceEpoch(s);
+        end.setMSecsSinceEpoch(e);
+        in >> detoxPeriod;
+        file.close();
+        periodEnabled=true;
+        this->statusBar()->showMessage((QString)"Detox Period Set: " + QString::number(detoxPeriod) + " hours");
+        ui->saveButton->setDisabled(true);
+        ui->startButton->setText("Restart");
+        ui->startButton->setEnabled(true);
+    }
 }
