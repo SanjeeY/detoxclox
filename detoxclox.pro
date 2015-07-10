@@ -1,0 +1,32 @@
+#-------------------------------------------------
+#
+# Project created by QtCreator 2013-10-06T13:36:59
+#
+#-------------------------------------------------
+
+QT       += core gui
+
+LIBS += -stdlib=libc++
+
+QMAKE_CXXFLAGS += -stdlib=libc++
+QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -mmacosx-version-min=10.7
+QMAKE_LFLAGS += -mmacosx-version-min=10.7
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+CONFIG += static
+RC_FILE = appicon.rc
+TARGET = detoxClox
+TEMPLATE = app
+
+SOURCES += main.cpp\
+        mainwindow.cpp \
+    setperioddialog.cpp
+
+HEADERS  += mainwindow.h \
+    setperioddialog.h
+
+FORMS    += mainwindow.ui \
+    setperioddialog.ui
+
+RESOURCES += \
+    desktopIcon.qrc
